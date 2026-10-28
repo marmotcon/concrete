@@ -1,14 +1,15 @@
-# Marmot Construction — Concrete Pour Tracker v1.4
+# Marmot Construction — Concrete Pour Tracker v1.5
 
 An iPhone-friendly concrete pour app. No Vercel, server submission key, or email provider needed. Publish with GitHub Pages.
 
-## Changes in v1.4
+## Changes in v1.5
 
-- **Foreman:** dropdown with Dave, Johnny, Tony, Jay, Carlos and Eddie.
-- **Subdivision / job number:** searchable by name or 5-digit job number; all 133 named jobs were imported from the three supplied 2026 workbooks (Maintenance: 40; New Construction: 47; Commercial: 46). Blank/unnamed placeholder rows were omitted.
-- Each selected job displays the job number plus project name, and both appear in the Excel report. Neither owner nor engineer is imported.
-- Previously saved drafts without a job number still open, but must select the matching job from the dropdown to export/share a new report.
-- Incremented the offline cache so iPhone installations load the updated job list.
+- **Fixed job selection:** tapping the subdivision field or the ▾ arrow opens a long, scrollable list with all 133 jobs immediately. Typing any part of a project name, category, or job number filters the visible list as you type.
+- **Job number + subdivision:** every option shows both; selecting one stores both values and includes them in exported Excel and saved reports.
+- **More reliable on iPhone:** job list expands within the form (not a floating menu), and tapping a result no longer gets interrupted by the search field losing focus.
+- **No extra job script to forget:** all 133 supplied job choices are embedded in `app.js`, so the menu does not depend on `jobs.js` being separately uploaded or cached.
+- **Browser cache refresh:** updated the GitHub Pages offline cache and versioned script URLs so older deployed versions are less likely to keep appearing.
+- Foreman options remain Dave, Johnny, Tony, Jay, Carlos and Eddie. Owner/engineer not included.
 
 ## Previous v1.3 features
 
@@ -20,7 +21,7 @@ An iPhone-friendly concrete pour app. No Vercel, server submission key, or email
 
 ## What is tracked
 
-- Date, six-name foreman dropdown, searchable subdivision with job number, phase, notes.
+- Date, six-name foreman dropdown, scrollable, searchable subdivision dropdown with job number, phase, notes.
 - **Hand Pour:** total m³ poured only. No structure/waste fields.
 - **Machine Pour:** 48 pull rate options (37 structures), thickness choices where provided, multiple lines, ordered and returned volumes, theoretical volume, actual used and waste percentage.
 - One combined concrete order shared across multiple structures, or per-structure ordering.
@@ -44,7 +45,7 @@ An iPhone-friendly concrete pour app. No Vercel, server submission key, or email
 3. Commit changes. Under Settings > Pages select Deploy from branch `main`, folder `/(root)`.
 4. Open `https://marmotcon.github.io/concrete/` in Safari and use Share > Add to Home Screen.
 
-After an update, close/reopen the website if you still see the old version: the service worker will upgrade its cache. Drafts/saved reports on the same website/device continue to use the same local storage keys.
+After an update, fully close/reopen the website if you still see an older version. If the iPhone Home Screen copy keeps the old page, open the site in Safari once to trigger its refreshed offline cache, then reopen the Home Screen app. Drafts/saved reports on the same website/device continue to use the same local storage keys.
 
 ## Privacy and limitations
 
@@ -52,8 +53,7 @@ Reports are stored **on the device only**, not in GitHub or a server. Don't clea
 
 ## Files
 
-- `index.html`, `styles.css`, `app.js`: app interface, job selector and share workflow
-- `jobs.js`: searchable job list from uploaded 2026 files; no owner/engineer data
+- `index.html`, `styles.css`, `app.js`: app interface, embedded 133-job list, selector and share workflow
 - `excel.js`: Excel workbook generation on-device
 - `structures.js`, `pull-rates.json`: supplied structure/dropdown rates
 - `assets/marmot-logo.png`, `assets/icon-192.png`, `assets/icon-512.png`: official branding and PWA icons

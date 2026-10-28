@@ -11,7 +11,7 @@
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="apple-touch-icon" href="assets/icon-192.png">
   <link rel="icon" type="image/png" href="assets/icon-192.png">
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css?v=1.5">
   <title>Marmot · Pour Tracker</title>
 </head>
 <body>
@@ -27,7 +27,7 @@
       <div class="sidebar-footer">
         <span class="small-pill"><span class="status-dot"></span> FIELD READY</span>
         <p>Simple measurements.<br>Accurate concrete tracking.</p>
-        <span class="version">POUR TRACKER · V1.4</span>
+        <span class="version">POUR TRACKER · V1.5</span>
       </div>
     </aside>
     <main class="main">
@@ -59,10 +59,13 @@
                   </label>
                   <div class="field job-field"><label for="subdivision">Subdivision / job number *</label>
                     <div class="job-lookup">
-                      <input id="subdivision" type="search" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Search name or job #..." role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="jobOptions" required>
+                      <div class="job-search-control">
+                        <input id="subdivision" type="search" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Select a job or type to filter..." role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="jobOptions" required>
+                        <button type="button" id="jobToggle" class="job-toggle" aria-label="Browse all jobs" aria-expanded="false" aria-controls="jobOptions">▾</button>
+                      </div>
                       <div class="job-options hidden" id="jobOptions" role="listbox" aria-label="Select subdivision and job number"></div>
                     </div>
-                    <span class="job-hint" id="jobHint">Search by subdivision or job number, then select a result.</span>
+                    <span class="job-hint" id="jobHint">Tap to browse all 133 jobs, or type a name or job number.</span>
                   </div>
                   <label class="field">Phase *<input id="phase" placeholder="e.g. Phase 17" required></label>
                 </div>
@@ -121,9 +124,8 @@
     </main>
   </div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <script src="structures.js"></script>
-  <script src="jobs.js"></script>
-  <script src="excel.js"></script>
-  <script src="app.js"></script>
+  <script src="structures.js?v=1.5"></script>
+  <script src="excel.js?v=1.5"></script>
+  <script src="app.js?v=1.5"></script>
 </body>
 </html>
