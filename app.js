@@ -1,6 +1,9 @@
 (() => {
   'use strict';
   const RATES = window.MARMOT_PULL_RATES;
+  const JOBS = window.MARMOT_JOBS || [];
+  const JOB_MAP = new Map(JOBS.map(j=>[String(j.id),j]));
+  const FOREMEN = ['Dave','Johnny','Tony','Jay','Carlos','Eddie'];
   const RATE_MAP = new Map(RATES.map(item => [item.id,item]));
   const STORE_DRAFT = 'marmot-pour-draft-v1';
   const STORE_SAVED = 'marmot-pour-saved-v1';
@@ -13,12 +16,57 @@
   const uid=()=>typeof crypto!=='undefined'&&crypto.randomUUID?crypto.randomUUID():String(Date.now())+'-'+Math.random().toString(36).slice(2);
   const today=()=>{const d=new Date();return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-');};
   const freshLine=()=>({id:uid(),structureId:'',quantity:'',ordered:'',returned:''});
-  const freshReport=()=>({id:uid(),date:today(),foreman:'',subdivision:'',phase:'',notes:'',pourType:'machine',handVolume:'',mode:'allocated',combinedOrdered:'',combinedReturned:'',lines:[freshLine()],updatedAt:new Date().toISOString(),sentAt:null});
+  const freshReport=()=>({id:uid(),date:today(),foreman:'',subdivision:'',jobNumber:'',phase:'',notes:'',pourType:'machine',handVolume:'',mode:'allocated',combinedOrdered:'',combinedReturned:'',lines:[freshLine()],updatedAt:new Date().toISOString(),sentAt:null});
   const readJSON=(key,fallback)=>{try{return JSON.parse(localStorage.getItem(key))??fallback;}catch{return fallback;}};
   let report=readJSON(STORE_DRAFT,null)||freshReport();
   let saved=readJSON(STORE_SAVED,[]);
   let activeTab='report',toastTimer;
   let reportCounter=0;
+  let jobDropdownOpen=false;
+  let activeJobIndex=0;
+  let matchingJobs=[];
+  const displayJob = job => `${job.id} — ${job.name}`;
+  const currentJob = rep => JOB_MAP.get(String(rep.jobNumber??''));
+  function closeJobChoices(){
+    jobDropdownOpen=false;
+    byId('jobOptions').classList.add('hidden');
+    byId('subdivision').setAttribute('aria-expanded','false');
+    byId('subdivision').removeAttribute('aria-activedescendant');
+  }
+  function highlightJob(){
+    qsa('[data-job]',byId('jobOptions')).forEach((el,i)=>{
+      const active=i===activeJobIndex;
+      el.classList.toggle('active',active);
+      el.setAttribute('aria-selected',String(active));
+    });
+    const activeEl=qsa('[data-job]',byId('jobOptions'))[activeJobIndex];
+    if(activeEl){byId('subdivision').setAttribute('aria-activedescendant',activeEl.id);activeEl.scrollIntoView({block:'nearest'});}
+  }
+  function showJobChoices(query=''){
+    const q=query.trim().toLowerCase().split(/\s+/).filter(Boolean);
+    matchingJobs=JOBS.filter(j=>q.every(term=>(`${j.id} ${j.name} ${j.group}`).toLowerCase().includes(term)));
+    const choices=byId('jobOptions');
+    choices.innerHTML=matchingJobs.length?matchingJobs.map(j=>`<button type="button" role="option" id="job-${j.id}" data-job="${j.id}" aria-selected="false"><span><b>${j.id}</b> <span class="job-option-name">${esc(j.name)}</span></span><small>${esc(j.group)}</small></button>`).join(''):'<div class="job-no-match">No matching jobs. Search by name or number.</div>';
+    activeJobIndex=0;
+    jobDropdownOpen=true;
+    choices.classList.remove('hidden');
+    byId('subdivision').setAttribute('aria-expanded','true');
+    if(matchingJobs.length)highlightJob();
+  }
+  function selectJob(job){
+    report.jobNumber=String(job.id);
+    report.subdivision=job.name;
+    byId('subdivision').value=displayJob(job);
+    byId('jobHint').textContent=`Selected job #${job.id} · ${job.group}`;
+    closeJobChoices();
+    persist();updateCalculations();clearError();
+  }
+  function renderJobField(){
+    const job=currentJob(report);
+    byId('subdivision').value=job?displayJob(job):report.subdivision||'';
+    byId('jobHint').textContent=job?`Selected job #${job.id} · ${job.group}`:'Search by subdivision or job number, then select a result.';
+    closeJobChoices();
+  }
   if(!Array.isArray(report.lines)||!report.lines.length) report.lines=[freshLine()];
   if(!['combined','allocated'].includes(report.mode))report.mode='allocated';
   // Pre-v1.1 saved reports have no pourType; they are machine pours.
@@ -123,7 +171,11 @@
   }
   function renderBasics(){
     if(report.pourType!=='hand')report.pourType='machine'; // Read legacy saved reports safely.
-    for(const [key,id] of [['date','pourDate'],['foreman','foreman'],['subdivision','subdivision'],['phase','phase'],['notes','notes'],['combinedOrdered','combinedOrdered'],['combinedReturned','combinedReturned'],['handVolume','handVolume']])byId(id).value=report[key]??'';
+    for(const [key,id] of [['date','pourDate'],['phase','phase'],['notes','notes'],['combinedOrdered','combinedOrdered'],['combinedReturned','combinedReturned'],['handVolume','handVolume']])byId(id).value=report[key]??'';
+    const f=byId('foreman');
+    f.innerHTML='<option value="">Select foreman...</option>'+FOREMEN.map(name=>`<option value="${name}">${name}</option>`).join('')+(report.foreman&&!FOREMEN.includes(report.foreman)?`<option value="${esc(report.foreman)}">${esc(report.foreman)} (previous report)</option>`:'');
+    f.value=report.foreman||'';
+    renderJobField();
     qsa('[data-pour-type]').forEach(x=>{const chosen=x.dataset.pourType===report.pourType;x.classList.toggle('selected',chosen);x.setAttribute('aria-pressed',String(chosen));});
     const hand=report.pourType==='hand';
     byId('handPourPanel').classList.toggle('hidden',!hand);
@@ -139,7 +191,7 @@
     const missing=[];
     if(!report.date)missing.push('pour date');
     if(!report.foreman.trim())missing.push('foreman');
-    if(!report.subdivision.trim())missing.push('subdivision');
+    if(!report.subdivision.trim()||!currentJob(report))missing.push('select a subdivision / job number from the list');
     if(!report.phase.trim())missing.push('phase');
     const c=getCalculation();
     if(report.pourType==='hand'){
@@ -172,7 +224,7 @@
   }
   function exportFilename(rep=report){
     const safe=s=>String(s||'').trim().replace(/[^a-zA-Z0-9-]+/g,'-').replace(/^-|-$/g,'').slice(0,34)||'Unspecified';
-    return `Marmot-Pour-${safe(rep.date)}-${safe(rep.subdivision)}-${safe(rep.phase)}-${rep.pourType==='hand'?'Hand':'Machine'}.xlsx`;
+    return `Marmot-Pour-${safe(rep.date)}-${rep.jobNumber?safe(rep.jobNumber)+'-':''}${safe(rep.subdivision)}-${safe(rep.phase)}-${rep.pourType==='hand'?'Hand':'Machine'}.xlsx`;
   }
   function makeFile(rep=report){return new File([window.MarmotExcel.create(rep,RATES)],exportFilename(rep),{type:window.MarmotExcel.mime});}
   function download(file){
@@ -182,7 +234,7 @@
   const RECIPIENT='estimating@marmotconstruction.com';
   function showShareNotice(message){const el=byId('shareNotice');el.textContent=message;el.classList.remove('hidden');}
   function emailSubject(){
-    return `Marmot ${report.pourType==='hand'?'Hand':'Machine'} Pour — ${report.subdivision} — ${report.phase} — ${report.date}`;
+    return `Marmot ${report.pourType==='hand'?'Hand':'Machine'} Pour — ${report.jobNumber||''} ${report.subdivision} — ${report.phase} — ${report.date}`;
   }
   function emailBody(){
     const c=getCalculation();
@@ -192,6 +244,7 @@
       '',
       `Date: ${report.date}`,
       `Foreman: ${report.foreman}`,
+      `Job number: ${report.jobNumber||'Unspecified'}`,
       `Subdivision: ${report.subdivision}`,
       `Phase: ${report.phase}`,
       `Pour type: ${type}`
@@ -248,7 +301,7 @@
       const short=rep.pourType==='hand'
         ?`${rep.date||'No date'} · ${rep.foreman||'Unassigned'} · Hand pour · ${fmt(num(rep.handVolume)??0)} m³`
         :`${rep.date||'No date'} · ${rep.foreman||'Unassigned'} · Machine pour · ${rep.lines?.length||0} structures`;
-      return `<div class="saved-entry"><div><h3>${rep.sentAt?'<span class="sent-mark">SENT</span>':''}${esc(rep.subdivision||'Untitled subdivision')} · ${esc(rep.phase||'No phase')}</h3><p>${esc(short)}</p></div><div class="saved-actions"><button type="button" data-load="${esc(rep.id)}">Open</button><button type="button" data-export="${esc(rep.id)}">Excel</button><button type="button" class="danger" data-delete="${esc(rep.id)}">Delete</button></div></div>`;
+      return `<div class="saved-entry"><div><h3>${rep.sentAt?'<span class="sent-mark">SENT</span>':''}${rep.jobNumber?esc(rep.jobNumber)+' — ':''}${esc(rep.subdivision||'Untitled subdivision')} · ${esc(rep.phase||'No phase')}</h3><p>${esc(short)}</p></div><div class="saved-actions"><button type="button" data-load="${esc(rep.id)}">Open</button><button type="button" data-export="${esc(rep.id)}">Excel</button><button type="button" class="danger" data-delete="${esc(rep.id)}">Delete</button></div></div>`;
     }).join('');
   }
   function renderRates(){
@@ -266,7 +319,36 @@
   }
   function bind(){
     qsa('[data-tab]').forEach(button=>button.addEventListener('click',()=>tab(button.dataset.tab)));
-    [['pourDate','date'],['foreman','foreman'],['subdivision','subdivision'],['phase','phase'],['notes','notes'],['combinedOrdered','combinedOrdered'],['combinedReturned','combinedReturned'],['handVolume','handVolume']].forEach(([id,field])=>byId(id).addEventListener('input',e=>{report[field]=e.target.value;persist();updateCalculations();clearError();}));
+    [['pourDate','date'],['foreman','foreman'],['phase','phase'],['notes','notes'],['combinedOrdered','combinedOrdered'],['combinedReturned','combinedReturned'],['handVolume','handVolume']].forEach(([id,field])=>byId(id).addEventListener('input',e=>{report[field]=e.target.value;persist();updateCalculations();clearError();}));
+    byId('subdivision').addEventListener('focus',()=>{
+      // For an already selected job, show the whole catalog to allow changing jobs.
+      showJobChoices(currentJob(report)?'':byId('subdivision').value);
+    });
+    byId('subdivision').addEventListener('input',e=>{
+      report.jobNumber='';report.subdivision=e.target.value;
+      byId('jobHint').textContent='Select a result below to confirm the job number.';
+      persist();clearError();showJobChoices(e.target.value);
+    });
+    byId('subdivision').addEventListener('keydown',e=>{
+      if(e.key==='Escape'){closeJobChoices();return;}
+      if(e.key==='ArrowDown'||e.key==='ArrowUp'){
+        e.preventDefault();
+        if(!jobDropdownOpen)showJobChoices(currentJob(report)?'':e.target.value);
+        if(!matchingJobs.length)return;
+        activeJobIndex=(activeJobIndex+(e.key==='ArrowDown'?1:-1)+matchingJobs.length)%matchingJobs.length;
+        highlightJob();
+      }else if(e.key==='Enter'&&jobDropdownOpen&&matchingJobs[activeJobIndex]){
+        e.preventDefault();selectJob(matchingJobs[activeJobIndex]);
+      }
+    });
+    byId('jobOptions').addEventListener('click',e=>{
+      const button=e.target.closest('[data-job]');if(!button)return;
+      const job=JOB_MAP.get(button.dataset.job);if(job)selectJob(job);
+    });
+    document.addEventListener('pointerdown',e=>{if(!e.target.closest('.job-lookup'))closeJobChoices();});
+    byId('subdivision').addEventListener('blur',()=>setTimeout(()=>{
+      if(!document.activeElement?.closest('.job-lookup'))closeJobChoices();
+    },180));
     qsa('[data-pour-type]').forEach(button=>button.addEventListener('click',()=>{
       if(report.pourType===button.dataset.pourType)return;
       report.pourType=button.dataset.pourType;persist();renderBasics();

@@ -1,8 +1,16 @@
-# Marmot Construction — Concrete Pour Tracker v1.3
+# Marmot Construction — Concrete Pour Tracker v1.4
 
 An iPhone-friendly concrete pour app. No Vercel, server submission key, or email provider needed. Publish with GitHub Pages.
 
-## Changes in v1.3
+## Changes in v1.4
+
+- **Foreman:** dropdown with Dave, Johnny, Tony, Jay, Carlos and Eddie.
+- **Subdivision / job number:** searchable by name or 5-digit job number; all 133 named jobs were imported from the three supplied 2026 workbooks (Maintenance: 40; New Construction: 47; Commercial: 46). Blank/unnamed placeholder rows were omitted.
+- Each selected job displays the job number plus project name, and both appear in the Excel report. Neither owner nor engineer is imported.
+- Previously saved drafts without a job number still open, but must select the matching job from the dropdown to export/share a new report.
+- Incremented the offline cache so iPhone installations load the updated job list.
+
+## Previous v1.3 features
 
 - Uses the supplied official Marmot Construction logo in the app (desktop and iPhone) and its orange peak mark for the Home Screen icon.
 - One submission method: **Share Excel Report**. This opens the iPhone native share sheet with the Excel workbook **already attached**. Choose Mail, add the recipient and send.
@@ -12,7 +20,7 @@ An iPhone-friendly concrete pour app. No Vercel, server submission key, or email
 
 ## What is tracked
 
-- Date, foreman, subdivision, phase, notes.
+- Date, six-name foreman dropdown, searchable subdivision with job number, phase, notes.
 - **Hand Pour:** total m³ poured only. No structure/waste fields.
 - **Machine Pour:** 48 pull rate options (37 structures), thickness choices where provided, multiple lines, ordered and returned volumes, theoretical volume, actual used and waste percentage.
 - One combined concrete order shared across multiple structures, or per-structure ordering.
@@ -31,10 +39,10 @@ An iPhone-friendly concrete pour app. No Vercel, server submission key, or email
 
 ## Publish/update on GitHub Pages
 
-1. Create a public GitHub repository such as `marmotcon/concrete-pours`, or open your existing concrete-pours repository.
+1. Create a public GitHub repository such as `marmotcon/concrete`, or open your existing concrete repository.
 2. Extract the ZIP and upload **all the files and folders inside it** to the repository root. Do not upload the ZIP or nest the app in another folder. Upload the `assets/` folder with the new `marmot-logo.png` and updated icons.
 3. Commit changes. Under Settings > Pages select Deploy from branch `main`, folder `/(root)`.
-4. Open `https://marmotcon.github.io/concrete-pours/` in Safari and use Share > Add to Home Screen.
+4. Open `https://marmotcon.github.io/concrete/` in Safari and use Share > Add to Home Screen.
 
 After an update, close/reopen the website if you still see the old version: the service worker will upgrade its cache. Drafts/saved reports on the same website/device continue to use the same local storage keys.
 
@@ -44,7 +52,8 @@ Reports are stored **on the device only**, not in GitHub or a server. Don't clea
 
 ## Files
 
-- `index.html`, `styles.css`, `app.js`: app interface and share workflow
+- `index.html`, `styles.css`, `app.js`: app interface, job selector and share workflow
+- `jobs.js`: searchable job list from uploaded 2026 files; no owner/engineer data
 - `excel.js`: Excel workbook generation on-device
 - `structures.js`, `pull-rates.json`: supplied structure/dropdown rates
 - `assets/marmot-logo.png`, `assets/icon-192.png`, `assets/icon-512.png`: official branding and PWA icons

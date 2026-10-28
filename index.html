@@ -27,7 +27,7 @@
       <div class="sidebar-footer">
         <span class="small-pill"><span class="status-dot"></span> FIELD READY</span>
         <p>Simple measurements.<br>Accurate concrete tracking.</p>
-        <span class="version">POUR TRACKER · V1.3</span>
+        <span class="version">POUR TRACKER · V1.4</span>
       </div>
     </aside>
     <main class="main">
@@ -54,8 +54,16 @@
                 <div class="panel-title"><div><span class="section-kicker">01 / PROJECT DETAILS</span><h2>Pour information</h2></div><span class="panel-hint">Required fields *</span></div>
                 <div class="field-grid">
                   <label class="field">Pour date *<input id="pourDate" type="date" required></label>
-                  <label class="field">Foreman *<input id="foreman" autocomplete="name" placeholder="Foreman name" required></label>
-                  <label class="field">Subdivision *<input id="subdivision" placeholder="e.g. Glacier Ridge" required></label>
+                  <label class="field">Foreman *
+                    <select id="foreman" required><option value="">Select foreman...</option><option>Dave</option><option>Johnny</option><option>Tony</option><option>Jay</option><option>Carlos</option><option>Eddie</option></select>
+                  </label>
+                  <div class="field job-field"><label for="subdivision">Subdivision / job number *</label>
+                    <div class="job-lookup">
+                      <input id="subdivision" type="search" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Search name or job #..." role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="jobOptions" required>
+                      <div class="job-options hidden" id="jobOptions" role="listbox" aria-label="Select subdivision and job number"></div>
+                    </div>
+                    <span class="job-hint" id="jobHint">Search by subdivision or job number, then select a result.</span>
+                  </div>
                   <label class="field">Phase *<input id="phase" placeholder="e.g. Phase 17" required></label>
                 </div>
                 <label class="field notes-field">Notes <span class="optional">OPTIONAL</span><textarea id="notes" rows="2" placeholder="Pour locations, weather, delays, truck tickets or other notes..."></textarea></label>
@@ -114,6 +122,7 @@
   </div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="structures.js"></script>
+  <script src="jobs.js"></script>
   <script src="excel.js"></script>
   <script src="app.js"></script>
 </body>

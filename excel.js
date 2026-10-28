@@ -22,9 +22,9 @@
     const r = [];
     r.push(`<row r="1">${cell('A1','MARMOT  /  DAILY CONCRETE POUR REPORT',1)}</row>`);
     r.push(values(3,['POUR DATE',report.date,'FOREMAN',report.foreman], [2,0,2,0]));
-    r.push(values(4,['SUBDIVISION',report.subdivision,'PHASE',report.phase], [2,0,2,0]));
+    r.push(values(4,['JOB NUMBER',report.jobNumber?Number(report.jobNumber):'', 'SUBDIVISION',report.subdivision], [2,0,2,0]));
     const hand=report.pourType==='hand';
-    r.push(values(5,['POUR TYPE',hand?'HAND POUR':'MACHINE POUR'],[2,0]));
+    r.push(values(5,['PHASE',report.phase, 'POUR TYPE',hand?'HAND POUR':'MACHINE POUR'],[2,0,2,0]));
     r.push(values(6,['VOLUME METHOD',hand?'Volume only — no waste calculation':report.mode==='combined'?'Single combined order':'Allocated by structure'],[2,0]));
     r.push(values(7,['NOTES',report.notes||''],[2,0]));
     if(hand){
@@ -36,7 +36,7 @@
       r.push(`<row r="13">${cell('A13','DAILY TOTAL',2)}${formula('E13','SUM(E11:E11)',volume,5)}</row>`);
       r.push(`<row r="15">${cell('A15','No machine structure, theoretical or waste calculations for hand pours.',3)}</row>`);
       r.push(`<row r="16">${cell('A16','Source: Marmot PullSheet(1).xls. See Pull rates tab for reference.',3)}</row>`);
-      const widths=[38,15,16,16,16,15,10,15,21,15,14];
+      const widths=[38,20,19,34,16,15,10,15,21,15,14];
       const cols=widths.map((w,i)=>`<col min="${i+1}" max="${i+1}" width="${w}" customWidth="1"/>`).join('');
       return sheetXml(`<sheetViews><sheetView workbookViewId="0"><pane ySplit="10" topLeftCell="A11" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews><cols>${cols}</cols><sheetData>${r.join('')}</sheetData><mergeCells count="2"><mergeCell ref="A1:K1"/><mergeCell ref="A8:K8"/></mergeCells>`);
     }
@@ -90,7 +90,7 @@
     r.push(`<row r="${totalRow}">${parts.join('')}</row>`);
     r.push(`<row r="${totalRow+2}">${cell('A'+(totalRow+2),combined?'Combined concrete order: line-by-line waste is not allocated.':'Volumes are allocated to individual structures; do not enter the same truck order twice.',3)}</row>`);
     r.push(`<row r="${totalRow+3}">${cell('A'+(totalRow+3),'Source: Marmot PullSheet(1).xls. See Pull rates tab for reference.',3)}</row>`);
-    const widths=[38,15,16,16,16,15,10,15,21,15,14];
+    const widths=[38,20,19,34,16,15,10,15,21,15,14];
     const cols=widths.map((w,i)=>`<col min="${i+1}" max="${i+1}" width="${w}" customWidth="1"/>`).join('');
     return sheetXml(`<sheetViews><sheetView workbookViewId="0"><pane ySplit="10" topLeftCell="A11" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews><cols>${cols}</cols><sheetData>${r.join('')}</sheetData><mergeCells count="2"><mergeCell ref="A1:K1"/><mergeCell ref="A8:K8"/></mergeCells>`);
   }
